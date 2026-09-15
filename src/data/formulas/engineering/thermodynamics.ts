@@ -1,0 +1,153 @@
+import type { Formula } from '../../../types';
+
+export const thermodynamicsFormulas: Formula[] = [
+  {
+    id: 'cop-refrigeration',
+    name: 'Coefficient of Performance (Refrigeration)',
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'COP = Q_c / W',
+    description: 'Measures the efficiency of a refrigeration cycle as heat removed per unit of work input.',
+    variables: [
+      { symbol: 'COP', name: 'Coefficient of performance', unit: 'dimensionless' },
+      { symbol: 'Qc', name: 'Heat removed from cold space', unit: 'J' },
+      { symbol: 'W', name: 'Work input', unit: 'J' },
+    ],
+    keywords: ['coefficient of performance', 'refrigeration', 'cooling', 'thermodynamics'],
+    solve: {
+      COP: (v) => v.Qc / v.W,
+      Qc: (v) => v.COP * v.W,
+      W: (v) => v.Qc / v.COP,
+    },
+  },
+  {
+    id: 'cop-heat-pump',
+    name: 'Coefficient of Performance (Heat Pump)',
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'COP_hp = Q_h / W',
+    description: 'Measures the efficiency of a heat pump as heat delivered per unit of work input.',
+    variables: [
+      { symbol: 'COPhp', name: 'Coefficient of performance (heat pump)', unit: 'dimensionless' },
+      { symbol: 'Qh', name: 'Heat delivered to hot space', unit: 'J' },
+      { symbol: 'W', name: 'Work input', unit: 'J' },
+    ],
+    keywords: ['coefficient of performance', 'heat pump', 'heating', 'thermodynamics'],
+    solve: {
+      COPhp: (v) => v.Qh / v.W,
+      Qh: (v) => v.COPhp * v.W,
+      W: (v) => v.Qh / v.COPhp,
+    },
+  },
+  {
+    id: 'heat-conduction-fourier',
+    name: "Fourier's Law of Heat Conduction",
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'Q = kA(ΔT) / d',
+    description: 'Calculates the rate of heat transfer by conduction through a material.',
+    variables: [
+      { symbol: 'Q', name: 'Heat transfer rate', unit: 'W' },
+      { symbol: 'k', name: 'Thermal conductivity', unit: 'W/(m·K)' },
+      { symbol: 'A', name: 'Area', unit: 'm²' },
+      { symbol: 'deltaT', name: 'Temperature difference', unit: 'K' },
+      { symbol: 'd', name: 'Material thickness', unit: 'm' },
+    ],
+    keywords: ['heat conduction', 'fourier law', 'thermal conductivity', 'thermodynamics', 'heat transfer'],
+    solve: {
+      Q: (v) => (v.k * v.A * v.deltaT) / v.d,
+      k: (v) => (v.Q * v.d) / (v.A * v.deltaT),
+      A: (v) => (v.Q * v.d) / (v.k * v.deltaT),
+      deltaT: (v) => (v.Q * v.d) / (v.k * v.A),
+      d: (v) => (v.k * v.A * v.deltaT) / v.Q,
+    },
+  },
+  {
+    id: 'heat-convection-newton',
+    name: "Newton's Law of Cooling",
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'Q = hA(ΔT)',
+    description: 'Calculates the rate of heat transfer by convection from a surface to a surrounding fluid.',
+    variables: [
+      { symbol: 'Q', name: 'Heat transfer rate', unit: 'W' },
+      { symbol: 'h', name: 'Convection heat transfer coefficient', unit: 'W/(m²·K)' },
+      { symbol: 'A', name: 'Surface area', unit: 'm²' },
+      { symbol: 'deltaT', name: 'Temperature difference', unit: 'K' },
+    ],
+    keywords: ['heat convection', 'newton cooling', 'thermodynamics', 'heat transfer'],
+    solve: {
+      Q: (v) => v.h * v.A * v.deltaT,
+      h: (v) => v.Q / (v.A * v.deltaT),
+      A: (v) => v.Q / (v.h * v.deltaT),
+      deltaT: (v) => v.Q / (v.h * v.A),
+    },
+  },
+  {
+    id: 'heat-radiation-stefan-boltzmann',
+    name: 'Stefan-Boltzmann Law',
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'Q = εσAT⁴',
+    description: 'Calculates the rate of heat transfer by radiation from a surface.',
+    variables: [
+      { symbol: 'Q', name: 'Radiant heat transfer rate', unit: 'W' },
+      { symbol: 'epsilon', name: 'Emissivity', unit: 'dimensionless' },
+      { symbol: 'sigma', name: 'Stefan-Boltzmann constant', unit: 'W/(m²·K⁴)' },
+      { symbol: 'A', name: 'Surface area', unit: 'm²' },
+      { symbol: 'T', name: 'Absolute temperature', unit: 'K' },
+    ],
+    keywords: ['stefan-boltzmann law', 'heat radiation', 'thermodynamics', 'heat transfer', 'emissivity'],
+    solve: {
+      Q: (v) => v.epsilon * v.sigma * v.A * v.T ** 4,
+      epsilon: (v) => v.Q / (v.sigma * v.A * v.T ** 4),
+      sigma: (v) => v.Q / (v.epsilon * v.A * v.T ** 4),
+      A: (v) => v.Q / (v.epsilon * v.sigma * v.T ** 4),
+      T: (v) => {
+        const val = v.Q / (v.epsilon * v.sigma * v.A);
+        if (val < 0) throw new Error('Cannot take the fourth root of a negative value for these inputs.');
+        return Math.pow(val, 0.25);
+      },
+    },
+  },
+  {
+    id: 'thermal-efficiency-heat-engine',
+    name: 'Thermal Efficiency (Heat Engine)',
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'η = W / Q_h',
+    description: 'Calculates the actual thermal efficiency of a heat engine as net work output over heat input.',
+    variables: [
+      { symbol: 'eta', name: 'Thermal efficiency', unit: 'dimensionless' },
+      { symbol: 'W', name: 'Net work output', unit: 'J' },
+      { symbol: 'Qh', name: 'Heat input', unit: 'J' },
+    ],
+    keywords: ['thermal efficiency', 'heat engine', 'thermodynamics', 'work output'],
+    solve: {
+      eta: (v) => v.W / v.Qh,
+      W: (v) => v.eta * v.Qh,
+      Qh: (v) => v.W / v.eta,
+    },
+  },
+  {
+    id: 'specific-heat-capacity',
+    name: 'Specific Heat Capacity',
+    category: 'Engineering',
+    subcategory: 'Thermodynamics',
+    equation: 'Q = mcΔT',
+    description: 'Calculates the heat energy required to change the temperature of a mass of material.',
+    variables: [
+      { symbol: 'Q', name: 'Heat energy', unit: 'J' },
+      { symbol: 'm', name: 'Mass', unit: 'kg' },
+      { symbol: 'c', name: 'Specific heat capacity', unit: 'J/(kg·K)' },
+      { symbol: 'deltaT', name: 'Temperature change', unit: 'K' },
+    ],
+    keywords: ['specific heat', 'heat capacity', 'thermodynamics', 'heat energy', 'temperature change'],
+    solve: {
+      Q: (v) => v.m * v.c * v.deltaT,
+      m: (v) => v.Q / (v.c * v.deltaT),
+      c: (v) => v.Q / (v.m * v.deltaT),
+      deltaT: (v) => v.Q / (v.m * v.c),
+    },
+  },
+];

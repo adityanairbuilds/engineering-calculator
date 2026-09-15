@@ -1,0 +1,183 @@
+import type { Formula } from '../../../types';
+
+export const mechanicalFormulas: Formula[] = [
+  {
+    id: 'pulley-mechanical-advantage',
+    name: 'Pulley Mechanical Advantage',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'MA = n',
+    description: 'The ideal mechanical advantage of a pulley system equals the number of rope segments supporting the load.',
+    variables: [
+      { symbol: 'MA', name: 'Mechanical advantage', unit: 'dimensionless' },
+      { symbol: 'n', name: 'Number of supporting rope segments', unit: 'dimensionless' },
+    ],
+    keywords: ['pulley', 'mechanical advantage', 'simple machines', 'mechanical engineering'],
+    solve: {
+      MA: (v) => v.n,
+      n: (v) => v.MA,
+    },
+  },
+  {
+    id: 'incline-plane-force',
+    name: 'Inclined Plane Force',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'F = mg sin(θ)',
+    description: 'Calculates the component of an object\'s weight acting along an inclined plane.',
+    variables: [
+      { symbol: 'F', name: 'Force along incline', unit: 'N' },
+      { symbol: 'm', name: 'Mass', unit: 'kg' },
+      { symbol: 'g', name: 'Gravitational acceleration', unit: 'm/s²' },
+      { symbol: 'theta', name: 'Angle of incline', unit: '°' },
+    ],
+    keywords: ['inclined plane', 'incline', 'force', 'mechanical engineering', 'ramp'],
+    solve: {
+      F: (v) => v.m * v.g * Math.sin((v.theta * Math.PI) / 180),
+      m: (v) => v.F / (v.g * Math.sin((v.theta * Math.PI) / 180)),
+      g: (v) => v.F / (v.m * Math.sin((v.theta * Math.PI) / 180)),
+      theta: (v) => {
+        const ratio = v.F / (v.m * v.g);
+        if (ratio < -1 || ratio > 1) throw new Error('No incline angle satisfies these force, mass, and gravity values.');
+        return (Math.asin(ratio) * 180) / Math.PI;
+      },
+    },
+  },
+  {
+    id: 'shaft-power-transmission',
+    name: 'Shaft Power Transmission',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'P = τω',
+    description: 'Calculates the power transmitted by a rotating shaft from torque and angular velocity.',
+    variables: [
+      { symbol: 'P', name: 'Power', unit: 'W' },
+      { symbol: 'tau', name: 'Torque', unit: 'N·m' },
+      { symbol: 'omega', name: 'Angular velocity', unit: 'rad/s' },
+    ],
+    keywords: ['shaft power', 'power transmission', 'torque', 'mechanical engineering'],
+    solve: {
+      P: (v) => v.tau * v.omega,
+      tau: (v) => v.P / v.omega,
+      omega: (v) => v.P / v.tau,
+    },
+  },
+  {
+    id: 'pump-power',
+    name: 'Pump Power',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'P = ρgQh',
+    description: 'Calculates the hydraulic power required to pump a fluid against a given height difference.',
+    variables: [
+      { symbol: 'P', name: 'Power', unit: 'W' },
+      { symbol: 'rho', name: 'Fluid density', unit: 'kg/m³' },
+      { symbol: 'g', name: 'Gravitational acceleration', unit: 'm/s²' },
+      { symbol: 'Q', name: 'Volumetric flow rate', unit: 'm³/s' },
+      { symbol: 'h', name: 'Height difference', unit: 'm' },
+    ],
+    keywords: ['pump power', 'fluid', 'mechanical engineering', 'hydraulic power'],
+    solve: {
+      P: (v) => v.rho * v.g * v.Q * v.h,
+      rho: (v) => v.P / (v.g * v.Q * v.h),
+      g: (v) => v.P / (v.rho * v.Q * v.h),
+      Q: (v) => v.P / (v.rho * v.g * v.h),
+      h: (v) => v.P / (v.rho * v.g * v.Q),
+    },
+  },
+  {
+    id: 'gear-ratio',
+    name: 'Gear Ratio',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'GR = N_driven / N_driver',
+    description: 'Calculates the gear ratio of a two-gear system from the number of teeth on the driven and driver gears.',
+    variables: [
+      { symbol: 'GR', name: 'Gear ratio', unit: 'dimensionless' },
+      { symbol: 'Ndriven', name: 'Teeth on driven gear', unit: 'dimensionless' },
+      { symbol: 'Ndriver', name: 'Teeth on driver gear', unit: 'dimensionless' },
+    ],
+    keywords: ['gear ratio', 'gears', 'mechanical engineering', 'teeth ratio', 'speed reduction'],
+    solve: {
+      GR: (v) => v.Ndriven / v.Ndriver,
+      Ndriven: (v) => v.GR * v.Ndriver,
+      Ndriver: (v) => v.Ndriven / v.GR,
+    },
+  },
+  {
+    id: 'belt-pulley-speed-ratio',
+    name: 'Belt/Pulley Speed Ratio',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'N₁d₁ = N₂d₂',
+    description: 'Relates the rotational speeds and diameters of two pulleys connected by a belt.',
+    variables: [
+      { symbol: 'N1', name: 'Speed of pulley 1', unit: 'rpm' },
+      { symbol: 'd1', name: 'Diameter of pulley 1', unit: 'm' },
+      { symbol: 'N2', name: 'Speed of pulley 2', unit: 'rpm' },
+      { symbol: 'd2', name: 'Diameter of pulley 2', unit: 'm' },
+    ],
+    keywords: ['belt drive', 'pulley', 'speed ratio', 'mechanical engineering'],
+    solve: {
+      N1: (v) => (v.N2 * v.d2) / v.d1,
+      d1: (v) => (v.N2 * v.d2) / v.N1,
+      N2: (v) => (v.N1 * v.d1) / v.d2,
+      d2: (v) => (v.N1 * v.d1) / v.N2,
+    },
+  },
+  {
+    id: 'shaft-torsional-shear-stress',
+    name: 'Torsional Shear Stress (Solid Circular Shaft)',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'τ = 16T / (πD³)',
+    description: 'Calculates the maximum shear stress at the surface of a solid circular shaft under torsion.',
+    variables: [
+      { symbol: 'tau', name: 'Shear stress', unit: 'Pa' },
+      { symbol: 'T', name: 'Applied torque', unit: 'N·m' },
+      { symbol: 'D', name: 'Shaft diameter', unit: 'm' },
+    ],
+    keywords: ['torsion', 'shear stress', 'shaft', 'mechanical engineering', 'torque'],
+    solve: {
+      tau: (v) => (16 * v.T) / (Math.PI * v.D ** 3),
+      T: (v) => (v.tau * Math.PI * v.D ** 3) / 16,
+      D: (v) => Math.cbrt((16 * v.T) / (Math.PI * v.tau)),
+    },
+  },
+  {
+    id: 'mechanical-efficiency',
+    name: 'Mechanical Efficiency',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'η = P_out / P_in',
+    description: 'Calculates the efficiency of a mechanical system as the ratio of output power to input power.',
+    variables: [
+      { symbol: 'eta', name: 'Efficiency', unit: 'dimensionless' },
+      { symbol: 'Pout', name: 'Output power', unit: 'W' },
+      { symbol: 'Pin', name: 'Input power', unit: 'W' },
+    ],
+    keywords: ['mechanical efficiency', 'efficiency', 'power', 'mechanical engineering'],
+    solve: {
+      eta: (v) => v.Pout / v.Pin,
+      Pout: (v) => v.eta * v.Pin,
+      Pin: (v) => v.Pout / v.eta,
+    },
+  },
+  {
+    id: 'angular-velocity-from-rpm',
+    name: 'Angular Velocity from RPM',
+    category: 'Engineering',
+    subcategory: 'Mechanical Engineering',
+    equation: 'ω = 2πN / 60',
+    description: 'Converts a rotational speed in revolutions per minute to angular velocity in radians per second.',
+    variables: [
+      { symbol: 'omega', name: 'Angular velocity', unit: 'rad/s' },
+      { symbol: 'N', name: 'Rotational speed', unit: 'rpm' },
+    ],
+    keywords: ['angular velocity', 'rpm', 'rotational speed', 'mechanical engineering', 'conversion'],
+    solve: {
+      omega: (v) => (2 * Math.PI * v.N) / 60,
+      N: (v) => (60 * v.omega) / (2 * Math.PI),
+    },
+  },
+];
