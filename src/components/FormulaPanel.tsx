@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Formula, Variable } from '../types';
-import { solveFormula } from '../utils/solveFormula';
+import { calculate } from '../api/calculate';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { formatResult } from '../utils/format';
 
 function VariableLabel({ variable }: { variable: Variable }) {
@@ -14,12 +15,56 @@ function VariableLabel({ variable }: { variable: Variable }) {
   );
 }
 
+type Outcome =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'ok'; value: number }
+  | { status: 'error'; message: string };
+
 export function FormulaPanel({ formula }: { formula: Formula }) {
-  const solveTargets = Object.keys(formula.solve);
+  const solveTargets = formula.solveTargets;
   const [target, setTarget] = useState(solveTargets[0]);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [outcome, setOutcome] = useState<Outcome>({ status: 'idle' });
+  const debouncedValues = useDebouncedValue(values, 150);
 
-  const outcome = target ? solveFormula(formula, target, values) : null;
+  // Stays quiet (idle) until every other field has a value, same as before —
+  // only now the actual computation is a call to the Python backend.
+  useEffect(() => {
+    if (!target) {
+      setOutcome({ status: 'idle' });
+      return;
+    }
+    const required = formula.variables.filter((v) => v.symbol !== target).map((v) => v.symbol);
+    const raw = required.map((symbol) => (debouncedValues[symbol] ?? '').trim());
+    if (raw.some((r) => r === '')) {
+      setOutcome({ status: 'idle' });
+      return;
+    }
+    const numeric = raw.map(Number);
+    // Number.isFinite (not isNaN) — an input like "1e400" parses to
+    // Infinity, which JSON can't represent and would otherwise sail past
+    // this check straight into a confusing 422 from the backend.
+    const badIndex = numeric.findIndex((n) => !Number.isFinite(n));
+    if (badIndex !== -1) {
+      setOutcome({ status: 'error', message: `"${raw[badIndex]}" isn't a valid number for ${required[badIndex]}.` });
+      return;
+    }
+
+    const payload = Object.fromEntries(required.map((symbol, i) => [symbol, numeric[i]]));
+    let cancelled = false;
+    setOutcome({ status: 'loading' });
+    calculate(formula.id, target, payload)
+      .then((value) => {
+        if (!cancelled) setOutcome({ status: 'ok', value });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setOutcome({ status: 'error', message: err instanceof Error ? err.message : 'Calculation failed.' });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [formula, target, debouncedValues]);
 
   function setValue(symbol: string, raw: string) {
     setValues((prev) => ({ ...prev, [symbol]: raw }));
@@ -70,7 +115,7 @@ export function FormulaPanel({ formula }: { formula: Formula }) {
                 <VariableLabel variable={variable} />
                 {isTarget ? (
                   <output className="formula-output mono">
-                    {outcome?.status === 'ok' ? formatResult(outcome.value) : '—'}
+                    {outcome.status === 'ok' ? formatResult(outcome.value) : outcome.status === 'loading' ? '…' : '—'}
                   </output>
                 ) : (
                   <input
@@ -88,7 +133,7 @@ export function FormulaPanel({ formula }: { formula: Formula }) {
         </div>
       )}
 
-      {outcome?.status === 'error' && <p className="error-text">{outcome.message}</p>}
+      {outcome.status === 'error' && <p className="error-text">{outcome.message}</p>}
     </div>
   );
 }

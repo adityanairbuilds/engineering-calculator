@@ -1,16 +1,40 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BasicCalculator } from '../components/BasicCalculator';
 import { FormulaListItem } from '../components/FormulaListItem';
 import { FormulaPanel } from '../components/FormulaPanel';
-import { allFormulas } from '../data/formulas';
-import { searchFormulas } from '../utils/search';
+import { searchFormulas } from '../api/formulas';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import type { Formula } from '../types';
 
 export function CalculatorPage() {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Formula | null>(null);
+  const [results, setResults] = useState<Formula[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const results = useMemo(() => searchFormulas(allFormulas, query).slice(0, 12), [query]);
+  const debouncedQuery = useDebouncedValue(query, 150);
+
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setResults([]);
+      setError(null);
+      return;
+    }
+    let cancelled = false;
+    searchFormulas(debouncedQuery)
+      .then((found) => {
+        if (!cancelled) {
+          setResults(found.slice(0, 12));
+          setError(null);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Search failed.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery]);
 
   return (
     <div className="calculator-page">
@@ -34,7 +58,9 @@ export function CalculatorPage() {
 
         {query.trim() && (
           <div className="search-results">
-            {results.length === 0 ? (
+            {error ? (
+              <p className="error-text">{error}</p>
+            ) : results.length === 0 ? (
               <p className="search-empty">No formulas match "{query}".</p>
             ) : (
               results.map((formula) => (

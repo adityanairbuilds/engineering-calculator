@@ -1,7 +1,7 @@
 import type { Route } from '../hooks/useRouter';
-import { categoryTree } from '../data/formulas';
+import type { CategoryTree } from '../hooks/useFormulas';
 
-export function HomePage({ navigate }: { navigate: (r: Route) => void }) {
+export function HomePage({ navigate, categoryTree }: { navigate: (r: Route) => void; categoryTree: CategoryTree[] }) {
   return (
     <section className="home">
       <h1>Engineering Calculator</h1>

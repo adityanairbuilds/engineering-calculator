@@ -218,6 +218,10 @@ main {
   font-size: 0.88rem;
 }
 
+.page-status {
+  color: var(--gray-500);
+}
+
 @media (max-width: 640px) {
   h1 {
     font-size: 1.5rem;

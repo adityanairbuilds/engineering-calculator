@@ -1,25 +1,67 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormulaListItem } from '../components/FormulaListItem';
 import { FormulaPanel } from '../components/FormulaPanel';
-import { allFormulas, categoryTree } from '../data/formulas';
-import { searchFormulas } from '../utils/search';
+import { searchFormulas } from '../api/formulas';
+import { useDebouncedValue } from '../hooks/useDebouncedValue';
+import type { CategoryTree } from '../hooks/useFormulas';
 import type { Formula } from '../types';
 
 const ALL = 'All';
 
-export function LibraryPage() {
+export function LibraryPage({ formulas, categoryTree }: { formulas: Formula[]; categoryTree: CategoryTree[] }) {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState(ALL);
   const [subcategory, setSubcategory] = useState(ALL);
   const [selected, setSelected] = useState<Formula | null>(null);
 
+  const debouncedQuery = useDebouncedValue(query, 150);
+  // The plain "browse everything" view filters the already-fetched list locally
+  // (instant, no network round trip). A real query hits the backend's search
+  // endpoint, which owns the actual ranking/matching logic.
+  const [searchResults, setSearchResults] = useState<Formula[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    if (!debouncedQuery.trim()) {
+      setSearchResults(null);
+      setSearching(false);
+      return;
+    }
+    let cancelled = false;
+    // Clear the previous query's results immediately rather than leaving them
+    // on screen under a "Searching…" label while a new (possibly differently
+    // filtered) search is in flight.
+    setSearchResults(null);
+    setSearching(true);
+    searchFormulas(debouncedQuery, {
+      category: category === ALL ? undefined : category,
+      subcategory: subcategory === ALL ? undefined : subcategory,
+    })
+      .then((results) => {
+        if (!cancelled) {
+          setSearchResults(results);
+          setSearching(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSearchResults([]);
+          setSearching(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedQuery, category, subcategory]);
+
   const subcategoryOptions =
     category === ALL ? [] : (categoryTree.find((c) => c.name === category)?.subcategories ?? []);
 
-  const searched = query.trim() ? searchFormulas(allFormulas, query) : allFormulas;
-  const results = searched.filter(
-    (f) => (category === ALL || f.category === category) && (subcategory === ALL || f.subcategory === subcategory),
-  );
+  const results = query.trim()
+    ? (searchResults ?? [])
+    : formulas.filter(
+        (f) => (category === ALL || f.category === category) && (subcategory === ALL || f.subcategory === subcategory),
+      );
   // Drop the open panel once its formula falls out of the filtered/searched results,
   // instead of leaving a stale calculator open for a formula the list no longer shows.
   const visibleSelected = selected && results.some((f) => f.id === selected.id) ? selected : null;
@@ -65,7 +107,7 @@ export function LibraryPage() {
       <div className="library-body">
         <div className="library-results">
           <p className="library-count">
-            {results.length} formula{results.length === 1 ? '' : 's'}
+            {searching ? 'Searching…' : `${results.length} formula${results.length === 1 ? '' : 's'}`}
           </p>
           {results.map((formula) => (
             <FormulaListItem

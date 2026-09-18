@@ -9,8 +9,8 @@ export function AboutPage() {
       </p>
       <p>
         Everything here — the formula database, the search, and the calculators — is built and
-        maintained by one student, as a learning project in React, TypeScript, and everyday
-        software engineering.
+        maintained by one student, as a learning project in React and TypeScript on the frontend,
+        Python and FastAPI on the backend, and everyday software engineering in between.
       </p>
       <p className="disclaimer">
         <strong>Educational tool disclaimer:</strong> This site is for learning and studying. Formula

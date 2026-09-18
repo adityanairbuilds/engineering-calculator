@@ -5,14 +5,10 @@ export interface Variable {
 }
 
 /**
- * Maps a variable symbol to a function that computes it from the other
- * variables' numeric values. Only symbols with a practical closed-form
- * solution are included — this is not a symbolic algebra system.
- * Solve functions may throw an Error (with a user-facing message) when
- * the inputs are outside the formula's valid domain.
+ * A formula as served by the backend. The actual solve logic runs in
+ * Python (see backend/calculations/) — `solveTargets` just lists which
+ * variable symbols the API can compute POST /api/calculate/{id} for.
  */
-export type SolveMap = Partial<Record<string, (values: Record<string, number>) => number>>;
-
 export interface Formula {
   id: string;
   name: string;
@@ -22,5 +18,5 @@ export interface Formula {
   description: string;
   variables: Variable[];
   keywords: string[];
-  solve: SolveMap;
+  solveTargets: string[];
 }
